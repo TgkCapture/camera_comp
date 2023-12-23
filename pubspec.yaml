@@ -33,6 +33,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  image_picker: ^0.8.4
+  image: ^3.0.1
+
 flutter_icons:
   android: true
   ios: true
