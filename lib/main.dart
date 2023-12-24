@@ -1,8 +1,11 @@
 import 'dart:io';
+// ignore: unused_import
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image/image.dart' as img;
+// ignore: unused_import
+import 'package:opencv_3/opencv_3.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,6 +39,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   File? imageOne;
   File? imageTwo;
+  
+  // ignore: non_constant_identifier_names
+  get ImgProcCascadeClassifier => null;
 
   Future<void> _getImage(ImageSource source, {bool isCamera = false}) async {
     final picker = ImagePicker();
@@ -47,45 +53,62 @@ class _MyHomePageState extends State<MyHomePage> {
           imageOne = File(pickedFile.path);
         } else {
           imageTwo = File(pickedFile.path);
-          _compareimages();
+          _compareImages();
         }
       });
     }
   }
 
-  Future<bool> _compareimages() async {
-    final imageOneinfo = await imageOne?.readAsBytes();
-    final imageTwoinfo = await imageTwo?.readAsBytes();
-
-    if (imageOneinfo == null || imageTwoinfo == null) {
-      // Handle the case where either imageOne or imageTwo is null
-      return false;
+  Future<void> _compareImages() async {
+    if (imageOne != null && imageTwo != null) {
+      await _performFaceRecognition();
+      _showResultDialog('Comparison completed.');
     }
-
-    final imageOneBytes = Uint8List.fromList(imageOneinfo);
-    final imageTwoBytes = Uint8List.fromList(imageTwoinfo);
-
-    final firstImage = img.decodeImage(imageOneBytes);
-    final secondImage = img.decodeImage(imageTwoBytes);
-
-    for (int y = 0; y < firstImage!.height; y++) {
-      for (int x = 0; x < secondImage!.width; x++) {
-        if (firstImage.getPixel(x, y) != secondImage.getPixel(x, y)) {
-          _showResultDialog('No match: Images are different.');
-          return false;
-        }
-      }
-    }
-
-    _showResultDialog('Success: Images match!');
-    return true;
   }
+
+  Future<void> _performFaceRecognition() async {
+  if (imageOne == null || imageTwo == null) {
+    if (kDebugMode) {
+      print('Error: Images not selected.');
+    }
+    return;
+  }
+
+  final firstImagePath = imageOne!.path;
+  final secondImagePath = imageTwo!.path;
+
+  try {
+    // ignore: prefer_typing_uninitialized_variables
+    var cascadeClassifier;
+    final faceCascade = await ImgProcCascadeClassifier.load(cascadeClassifier.haarcascades + 'haarcascade_frontalface_default.xml');
+
+    final firstImageMat = await ImgProc.imread(firstImagePath);
+    final secondImageMat = await ImgProc.imread(secondImagePath);
+
+    await ImgProc.cvtColor(firstImageMat, firstImageMat, ImgProc.colorBGR2GRAY);
+    await ImgProc.cvtColor(secondImageMat, secondImageMat, ImgProc.colorBGR2GRAY);
+
+    final firstFaces = await faceCascade.detectMultiScale(firstImageMat);
+    final secondFaces = await faceCascade.detectMultiScale(secondImageMat);
+
+    final isMatch = firstFaces.isNotEmpty && secondFaces.isNotEmpty;
+
+    _showResultDialog(isMatch ? 'Success: Faces match!' : 'No match: Faces are different.');
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error: $e');
+    }
+    _showResultDialog('Error: Face recognition failed.');
+  }
+  return;
+}
+
 
   void _showResultDialog(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Image Comparison Result'),
+        title: const Text('Face Recognition Result'),
         content: Text(message),
         actions: [
           TextButton(
@@ -146,4 +169,12 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+class ImgProc {
+  static var colorBGR2GRAY;
+
+  static imread(String firstImagePath) {}
+  
+  static cvtColor(firstImageMat, firstImageMat2, colorBGR2GRAY) {}
 }
