@@ -9,6 +9,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  // const MyApp({Key? key});
   const MyApp({super.key});
 
   @override
@@ -16,7 +17,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'CameraComp',
       theme: ThemeData(
-        
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 38, 190, 183)),
         useMaterial3: true,
       ),
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({Key? key, required this.title});
 
   final String title;
 
@@ -38,9 +38,9 @@ class _MyHomePageState extends State<MyHomePage> {
   File? imageOne;
   File? imageTwo;
 
-  Future<void> _getImage(ImageSource source) async {
+  Future<void> _getImage(ImageSource source, {bool isCamera = false}) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       setState(() {
@@ -53,13 +53,18 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
-  
+
   Future<bool> _compareimages() async {
     final imageOneinfo = await imageOne?.readAsBytes();
     final imageTwoinfo = await imageTwo?.readAsBytes();
 
-    final imageOneBytes = Uint8List.fromList(imageOneinfo as List<int>);
-    final imageTwoBytes = Uint8List.fromList(imageTwoinfo as List<int>);
+    if (imageOneinfo == null || imageTwoinfo == null) {
+      // Handle the case where either imageOne or imageTwo is null
+      return false;
+    }
+
+    final imageOneBytes = Uint8List.fromList(imageOneinfo);
+    final imageTwoBytes = Uint8List.fromList(imageTwoinfo);
 
     final firstImage = img.decodeImage(imageOneBytes);
     final secondImage = img.decodeImage(imageTwoBytes);
@@ -118,9 +123,18 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 20),
             if (imageOne != null)
-              ElevatedButton(
-                onPressed: () => _getImage(ImageSource.camera),
-                child: const Text('Take Second Image'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _getImage(ImageSource.camera, isCamera: true),
+                    child: const Text('Take Front Camera Image'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _getImage(ImageSource.camera, isCamera: true),
+                    child: const Text('Take Rear Camera Image'),
+                  ),
+                ],
               ),
             if (imageTwo != null)
               Image.file(
@@ -133,6 +147,5 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-  }   
-  
+  }
 }
