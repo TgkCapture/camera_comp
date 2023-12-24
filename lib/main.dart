@@ -9,8 +9,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  // const MyApp({Key? key});
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
   @override
   Widget build(BuildContext context) {
@@ -123,19 +122,18 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 20),
             if (imageOne != null)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _getImage(ImageSource.camera, isCamera: true),
-                    child: const Text('Take Front Camera Image'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _getImage(ImageSource.camera, isCamera: true),
-                    child: const Text('Take Rear Camera Image'),
-                  ),
-                ],
+              ElevatedButton.icon(
+                onPressed: () => _getImage(ImageSource.camera, isCamera: true),
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Take Front Camera Image'),
               ),
+            if (imageOne != null)
+              ElevatedButton.icon(
+                onPressed: () => _getImage(ImageSource.camera, isCamera: false),
+                icon: const Icon(Icons.camera_rear),
+                label: const Text('Take Rear Camera Image'),
+              ),
+            const SizedBox(height: 20),
             if (imageTwo != null)
               Image.file(
                 imageTwo!,
